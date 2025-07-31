@@ -1,5 +1,6 @@
 # CLOUD_ARCHITECTURE
 This project presents a strategic cloud architecture for an oil and natural gas company.
+https://gamma.app/docs/Cloud-Architecture-for-a-Global-Oil-Gas-Company-0q02sujrhwl2xaq?mode=doc
 # 🌐 Oil & Natural Gas Cloud Architecture – IaaS + PaaS Deployment
 
 ## 🚀 Overview
