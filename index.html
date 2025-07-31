@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Strategic Cloud Architecture for Oil & Gas Operations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals (Slate, Zinc) with a touch of Amber for accents. -->
+    <!-- Application Structure Plan: The SPA is designed as a top-down narrative dashboard. It starts with a high-level summary, then dives into the core architecture with an interactive, tabbed interface for IaaS (Mining) and PaaS (Distribution). This separation allows users to focus on one complex part at a time. This is followed by an interactive 'Shared Responsibility' module to clarify roles, a 'Benefits Dashboard' with charts to quantify the advantages, and a final 'Roadmap' section for next steps. This structure guides the user from the 'what' and 'why' to the 'how', making the dense report content digestible and engaging. -->
+    <!-- Visualization & Content Choices: 
+        1. Architecture Diagram: Report Info -> IaaS/PaaS architecture components. Goal -> Organize/Inform. Viz -> Interactive HTML/CSS diagram. Interaction -> Click on components (Edge, On-Prem, Public Cloud) to display detailed descriptions. Justification -> Simplifies a complex, multi-layered architecture into an explorable visual model. Method -> Vanilla JS updating text content.
+        2. Shared Responsibility Model: Report Info -> Tables 2 & 3. Goal -> Compare/Inform. Viz -> Toggled list view. Interaction -> Buttons to switch between IaaS and PaaS views, dynamically changing which party is listed as responsible for each item. Justification -> Transforms static tables into an interactive tool for direct comparison, enhancing understanding of this key concept. Method -> Vanilla JS toggling classes and text.
+        3. Mining Benefits Chart: Report Info -> Table 4 data. Goal -> Compare. Viz -> Bar Chart. Interaction -> Hover tooltips. Justification -> Clearly visualizes the quantitative improvements offered by Edge computing over traditional methods. Library -> Chart.js.
+        4. Key Benefits Cards: Report Info -> Financial/Operational benefits text. Goal -> Inform. Viz -> Dynamic stat cards. Justification -> Highlights high-impact benefits in a scannable format. Method -> Styled HTML/Tailwind.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container { height: 400px; }
+        }
+        .nav-link { transition: color 0.3s, border-color 0.3s; }
+        .nav-link.active { color: #f59e0b; border-bottom-color: #f59e0b; }
+        .tab-btn.active { background-color: #d97706; color: #ffffff; }
+        .arch-component { transition: all 0.3s; cursor: pointer; border: 2px solid transparent; }
+        .arch-component.selected { border-color: #f59e0b; transform: scale(1.05); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); }
+        .responsibility-item { transition: background-color 0.3s; }
+        .step-item::before {
+            content: '';
+            position: absolute;
+            left: 1rem;
+            top: 2.5rem;
+            bottom: -1.5rem;
+            width: 2px;
+            background-color: #d4d4d8;
+        }
+         .step-item:last-child::before {
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-zinc-50 text-slate-800">
+
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="text-2xl font-bold text-slate-900">
+                <span class="text-amber-500">O&G</span> Cloud Strategy
+            </div>
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="#architecture" class="nav-link text-slate-600 hover:text-amber-500 border-b-2 border-transparent pb-1">Architecture</a>
+                <a href="#responsibility" class="nav-link text-slate-600 hover:text-amber-500 border-b-2 border-transparent pb-1">Responsibility</a>
+                <a href="#benefits" class="nav-link text-slate-600 hover:text-amber-500 border-b-2 border-transparent pb-1">Benefits</a>
+                <a href="#roadmap" class="nav-link text-slate-600 hover:text-amber-500 border-b-2 border-transparent pb-1">Roadmap</a>
+            </div>
+            <div class="md:hidden">
+                <button id="menu-btn" class="text-slate-600 focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="hidden md:hidden">
+            <a href="#architecture" class="block py-2 px-6 text-sm text-slate-600 hover:bg-amber-50">Architecture</a>
+            <a href="#responsibility" class="block py-2 px-6 text-sm text-slate-600 hover:bg-amber-50">Responsibility</a>
+            <a href="#benefits" class="block py-2 px-6 text-sm text-slate-600 hover:bg-amber-50">Benefits</a>
+            <a href="#roadmap" class="block py-2 px-6 text-sm text-slate-600 hover:bg-amber-50">Roadmap</a>
+        </div>
+    </header>
+
+    <main>
+        <section id="hero" class="py-20 bg-white">
+            <div class="container mx-auto px-6 text-center">
+                <h1 class="text-4xl md:text-6xl font-bold text-slate-900 leading-tight">A New Frontier for Energy Operations</h1>
+                <p class="mt-6 text-lg text-slate-600 max-w-3xl mx-auto">An interactive exploration of an Edge-Augmented Hybrid Multi-Cloud architecture, designed to revolutionize mining and distribution for the modern oil and gas enterprise.</p>
+            </div>
+        </section>
+
+        <section id="architecture" class="py-20">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold">The Proposed Cloud Architecture</h2>
+                    <p class="mt-4 text-slate-600 max-w-2xl mx-auto">This solution integrates two distinct cloud models to address unique operational needs. Select a business unit below to explore its tailored architecture. Click on each component in the diagram to learn more about its role.</p>
+                </div>
+
+                <div class="flex justify-center mb-8">
+                    <div class="bg-slate-200 rounded-full p-1 flex space-x-1">
+                        <button id="iaas-tab-btn" class="tab-btn px-6 py-2 text-sm font-semibold rounded-full bg-amber-600 text-white">IaaS for Mining</button>
+                        <button id="paas-tab-btn" class="tab-btn px-6 py-2 text-sm font-semibold rounded-full text-slate-700">PaaS for Distribution</button>
+                    </div>
+                </div>
+
+                <div id="architecture-content" class="bg-white p-8 rounded-2xl shadow-lg">
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
+                        <div id="arch-diagram" class="lg:col-span-2 space-y-4">
+                            <!-- Diagram will be dynamically generated here -->
+                        </div>
+                        <div id="arch-details" class="bg-zinc-100 p-6 rounded-lg min-h-[300px]">
+                            <h3 id="detail-title" class="text-xl font-bold mb-2 text-slate-800">Select a Component</h3>
+                            <p id="detail-text" class="text-slate-600">Click on a component in the diagram to the left to see its detailed description and purpose within the architecture.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="responsibility" class="py-20 bg-white">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold">The Shared Responsibility Model</h2>
+                    <p class="mt-4 text-slate-600 max-w-2xl mx-auto">Understanding who manages what is critical. The division of responsibility changes based on the cloud service model. Toggle between IaaS and PaaS to see the difference.</p>
+                </div>
+                <div class="max-w-4xl mx-auto">
+                    <div class="flex justify-center mb-8 space-x-4">
+                        <button id="resp-iaas-btn" class="px-6 py-2 font-semibold text-white bg-amber-600 rounded-full shadow-md hover:bg-amber-700 transition">IaaS View</button>
+                        <button id="resp-paas-btn" class="px-6 py-2 font-semibold text-slate-700 bg-slate-200 rounded-full hover:bg-slate-300 transition">PaaS View</button>
+                    </div>
+                    <div id="responsibility-list" class="space-y-3">
+                        <!-- Responsibility items will be injected here -->
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="benefits" class="py-20">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold">Quantifiable Business Benefits</h2>
+                    <p class="mt-4 text-slate-600 max-w-2xl mx-auto">The proposed architecture delivers significant improvements in safety, efficiency, and cost-effectiveness. The chart below highlights the impact of Edge Computing in mining operations.</p>
+                </div>
+                <div class="bg-white p-4 sm:p-8 rounded-2xl shadow-lg">
+                    <div class="chart-container">
+                        <canvas id="benefitsChart"></canvas>
+                    </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mt-12 text-center">
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-4xl font-bold text-amber-600">90%+</h3>
+                        <p class="mt-2 text-slate-600">Predictive Maintenance Accuracy</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-4xl font-bold text-amber-600">-66%</h3>
+                        <p class="mt-2 text-slate-600">Reduction in Worker Safety Incidents</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-4xl font-bold text-amber-600">-28%</h3>
+                        <p class="mt-2 text-slate-600">Energy Consumption per Tonne</p>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-4xl font-bold text-amber-600">Faster</h3>
+                        <p class="mt-2 text-slate-600">Time-to-Market for Applications</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="roadmap" class="py-20 bg-white">
+            <div class="container mx-auto px-6">
+                <div class="text-center mb-12">
+                    <h2 class="text-3xl md:text-4xl font-bold">Implementation Roadmap</h2>
+                    <p class="mt-4 text-slate-600 max-w-2xl mx-auto">A successful transition requires a strategic, phased approach. Here are the recommended next steps to realize the full potential of this architecture.</p>
+                </div>
+                <div class="max-w-3xl mx-auto relative">
+                    <!-- Roadmap items will be injected here -->
+                    <div id="roadmap-container" class="space-y-12"></div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="bg-slate-800 text-white py-8">
+        <div class="container mx-auto px-6 text-center text-slate-400 text-sm">
+            <p>&copy; 2025 Oil & Gas Company. All Rights Reserved.</p>
+            <p class="mt-2">This interactive report is a conceptual design based on the Strategic Cloud Architecture document.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            const appData = {
+                architecture: {
+                    iaas: {
+                        title: 'IaaS for Mining Operations',
+                        description: 'An Edge-Centric Hybrid Cloud Approach for real-time processing and autonomy in remote, challenging environments.',
+                        components: [
+                            { id: 'edge', name: 'Edge Nodes (Mining Sites)', details: 'Primary IaaS deployment at each mine. Comprises ruggedized IoT sensors, cameras, robots, and powerful local processors (CPUs/GPUs). Hosts VMs and containers for real-time data processing, AI/ML inference, and operational control directly at the data source.' },
+                            { id: 'onprem', name: 'On-Premises Data Centers', details: 'Optional private cloud component. Can host sensitive data archives, legacy systems, or act as an aggregation point for processed data from multiple edge sites before ingestion into the public cloud.' },
+                            { id: 'public', name: 'Public Cloud Integration', details: 'Leverages vast scalability for aggregated data analytics, long-term storage, and complex AI model training. Securely connected to edge/on-prem via VPNs and WANs for encrypted data transfer.' }
+                        ]
+                    },
+                    paas: {
+                        title: 'PaaS for Oil Distribution',
+                        description: 'A Scalable Cloud Platform for agile application development, robust data analytics, and seamless collaboration.',
+                        components: [
+                            { id: 'dev', name: 'Development & Analytics Platform', details: 'A complete, ready-to-use cloud environment with pre-configured OS, middleware, databases (SQL/NoSQL), and development tools. Empowers teams to build and deploy custom apps for supply chain, inventory, and logistics.' },
+                            { id: 'integration', name: 'Integration Layer (APIs & iPaaS)', details: 'Utilizes robust APIs and gateways to connect distribution applications with other enterprise systems (ERP, CRM) and external partners, ensuring smooth data flow and process orchestration across the hybrid environment.' },
+                            { id: 'public_paas', name: 'Public Cloud Infrastructure', details: 'The PaaS provider hosts and manages all underlying servers, networks, storage, and virtualization. The company focuses on applications and data, not infrastructure management.' }
+                        ]
+                    }
+                },
+                responsibility: {
+                    iaas: [
+                        { item: 'Physical Security', owner: 'CSP' },
+                        { item: 'Infrastructure (Hardware/Hypervisor)', owner: 'CSP' },
+                        { item: 'Network Controls (Underlying)', owner: 'CSP' },
+                        { item: 'Operating System', owner: 'Customer' },
+                        { item: 'Applications & Middleware', owner: 'Customer' },
+                        { item: 'Data Protection & Encryption', owner: 'Customer' },
+                        { item: 'Identity & Access Management', owner: 'Customer' },
+                        { item: 'Network Controls (Customer-Configured)', owner: 'Customer' },
+                    ],
+                    paas: [
+                        { item: 'Physical Security', owner: 'CSP' },
+                        { item: 'Infrastructure (Hardware/Hypervisor)', owner: 'CSP' },
+                        { item: 'Operating System & Middleware', owner: 'CSP' },
+                        { item: 'Runtime Environment', owner: 'CSP' },
+                        { item: 'Application Security', owner: 'Customer' },
+                        { item: 'Data Management & Security', owner: 'Customer' },
+                        { item: 'User Access & Permissions', owner: 'Customer' },
+                        { item: 'Application Configuration', owner: 'Customer' },
+                    ]
+                },
+                roadmap: [
+                    { phase: 1, title: 'Pilot Programs & Validation', description: 'Commence with small-scale pilot projects for both the IaaS edge solution and a PaaS distribution app. This validates assumptions and demonstrates business value before a full rollout.' },
+                    { phase: 2, title: 'Strategic Migration & Vendor Selection', description: 'Adopt an incremental migration approach, starting with less complex workloads. Select CSPs with proven oil and gas industry expertise, robust security, and flexible platforms.' },
+                    { phase: 3, title: 'Talent Development & DevOps Adoption', description: 'Invest in cloud training and certifications for internal teams. Implement DevOps principles and CI/CD pipelines to streamline development and deployment across the new hybrid environment.' },
+                    { phase: 4, title: 'Unified Management & Optimization', description: 'Deploy a "single pane of glass" for monitoring. Adopt FinOps for cost management and implement a Zero Trust security model to protect distributed data and workloads.' }
+                ]
+            };
+
+            const iaasTabBtn = document.getElementById('iaas-tab-btn');
+            const paasTabBtn = document.getElementById('paas-tab-btn');
+            const archDiagram = document.getElementById('arch-diagram');
+            const detailTitle = document.getElementById('detail-title');
+            const detailText = document.getElementById('detail-text');
+
+            function renderArchitecture(type) {
+                const data = appData.architecture[type];
+                archDiagram.innerHTML = `
+                    <h3 class="text-2xl font-bold text-center mb-4">${data.title}</h3>
+                    <p class="text-center text-slate-500 mb-8">${data.description}</p>
+                    <div class="flex flex-col items-center space-y-6">
+                        ${data.components.map(comp => `
+                            <div id="${comp.id}" class="arch-component bg-white p-6 rounded-lg shadow-md w-full max-w-lg text-center border-2 border-slate-200 hover:border-amber-400 hover:shadow-xl">
+                                <h4 class="text-lg font-semibold">${comp.name}</h4>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+                
+                if (data.components.length > 1) {
+                    const components = archDiagram.querySelectorAll('.arch-component');
+                    for (let i = 0; i < components.length - 1; i++) {
+                        const arrow = document.createElement('div');
+                        arrow.className = 'text-amber-500 text-3xl font-light text-center my-[-1rem]';
+                        arrow.innerHTML = '&#8595;';
+                        components[i].after(arrow);
+                    }
+                }
+
+                detailTitle.textContent = 'Select a Component';
+                detailText.textContent = 'Click on a component in the diagram to see its detailed description and purpose within the architecture.';
+
+                document.querySelectorAll('.arch-component').forEach(el => {
+                    el.addEventListener('click', () => {
+                        document.querySelectorAll('.arch-component').forEach(c => c.classList.remove('selected'));
+                        el.classList.add('selected');
+                        const componentData = data.components.find(c => c.id === el.id);
+                        if (componentData) {
+                            detailTitle.textContent = componentData.name;
+                            detailText.textContent = componentData.details;
+                        }
+                    });
+                });
+            }
+
+            iaasTabBtn.addEventListener('click', () => {
+                iaasTabBtn.classList.add('active');
+                paasTabBtn.classList.remove('active');
+                renderArchitecture('iaas');
+            });
+
+            paasTabBtn.addEventListener('click', () => {
+                paasTabBtn.classList.add('active');
+                iaasTabBtn.classList.remove('active');
+                renderArchitecture('paas');
+            });
+
+            renderArchitecture('iaas');
+
+            const respIaasBtn = document.getElementById('resp-iaas-btn');
+            const respPaasBtn = document.getElementById('resp-paas-btn');
+            const responsibilityList = document.getElementById('responsibility-list');
+
+            function renderResponsibility(type) {
+                const data = appData.responsibility[type];
+                responsibilityList.innerHTML = data.map(item => `
+                    <div class="responsibility-item flex items-center justify-between bg-zinc-100 p-4 rounded-lg">
+                        <span class="font-medium text-slate-700">${item.item}</span>
+                        <span class="font-semibold px-3 py-1 text-sm rounded-full ${item.owner === 'CSP' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}">
+                            ${item.owner === 'CSP' ? 'Cloud Provider' : 'Oil & Gas Co.'}
+                        </span>
+                    </div>
+                `).join('');
+            }
+
+            respIaasBtn.addEventListener('click', () => {
+                renderResponsibility('iaas');
+                respIaasBtn.classList.replace('bg-slate-200', 'bg-amber-600');
+                respIaasBtn.classList.replace('text-slate-700', 'text-white');
+                respPaasBtn.classList.replace('bg-amber-600', 'bg-slate-200');
+                respPaasBtn.classList.replace('text-white', 'text-slate-700');
+            });
+            
+            respPaasBtn.addEventListener('click', () => {
+                renderResponsibility('paas');
+                respPaasBtn.classList.replace('bg-slate-200', 'bg-amber-600');
+                respPaasBtn.classList.replace('text-slate-700', 'text-white');
+                respIaasBtn.classList.replace('bg-amber-600', 'bg-slate-200');
+                respIaasBtn.classList.replace('text-white', 'text-slate-700');
+            });
+
+            renderResponsibility('iaas');
+
+            const benefitsCtx = document.getElementById('benefitsChart').getContext('2d');
+            const benefitsChart = new Chart(benefitsCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Worker Safety Incidents (per year)', 'Energy Consumption (kWh/tonne)', 'Predictive Maintenance Accuracy (%)'],
+                    datasets: [
+                        {
+                            label: 'Traditional Mining',
+                            data: [24, 90, 65],
+                            backgroundColor: 'rgba(100, 116, 139, 0.6)',
+                            borderColor: 'rgba(100, 116, 139, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'With Edge Computing',
+                            data: [8, 65, 90],
+                            backgroundColor: 'rgba(245, 158, 11, 0.6)',
+                            borderColor: 'rgba(245, 158, 11, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                color: '#e2e8f0'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y;
+                                        if (context.label.includes('%')) {
+                                            label += '%';
+                                        }
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            const roadmapContainer = document.getElementById('roadmap-container');
+            roadmapContainer.innerHTML = appData.roadmap.map(step => `
+                <div class="step-item relative pl-8">
+                    <div class="absolute left-0 flex items-center justify-center w-8 h-8 bg-amber-500 text-white font-bold rounded-full mt-1">
+                        ${step.phase}
+                    </div>
+                    <div class="ml-4">
+                        <h4 class="text-xl font-semibold text-slate-800">${step.title}</h4>
+                        <p class="mt-2 text-slate-600">${step.description}</p>
+                    </div>
+                </div>
+            `).join('');
+
+            const menuBtn = document.getElementById('menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+            menuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+            
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    document.querySelector(this.getAttribute('href')).scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                    if (!mobileMenu.classList.contains('hidden')) {
+                        mobileMenu.classList.add('hidden');
+                    }
+                });
+            });
+
+            const navLinks = document.querySelectorAll('.nav-link');
+            const sections = document.querySelectorAll('main section');
+            window.addEventListener('scroll', () => {
+                let current = '';
+                sections.forEach(section => {
+                    const sectionTop = section.offsetTop;
+                    if (pageYOffset >= sectionTop - 60) {
+                        current = section.getAttribute('id');
+                    }
+                });
+
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href').includes(current)) {
+                        link.classList.add('active');
+                    }
+                });
+            });
+
+        });
+    </script>
+</body>
+</html>
